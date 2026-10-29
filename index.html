@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jusman0</title>
+<meta name="description" content="int8 neural networks, from resistors to an Arduino to Verilog to an FPGA.">
+<style>
+  :root {
+    --paper: #fbfbf8;
+    --ink: #161616;
+    --muted: #5e5e5a;
+    --rule: #d6d6d0;
+    --rule-strong: #161616;
+    --accent: #0f5c3a;   /* solder-mask green */
+    --code-bg: #f1f1ec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #121412;
+      --ink: #e6e6e1;
+      --muted: #9a9a94;
+      --rule: #2e322e;
+      --rule-strong: #e6e6e1;
+      --accent: #6fbf8f;
+      --code-bg: #1a1d1a;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  .page { max-width: 780px; margin: 0 auto; padding: 48px 16px 64px; }
+
+  a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
+  a:hover { text-decoration-thickness: 2px; }
+
+  code, pre, .mono, td.v, .part {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  code { font-size: 0.9em; background: var(--code-bg); padding: 1px 4px; }
+
+  /* Header */
+  header { border-top: 3px solid var(--rule-strong); border-bottom: 1px solid var(--rule-strong); padding: 14px 0 16px; }
+  .masthead { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  h1 { margin: 0; font-size: 28px; letter-spacing: -0.01em; }
+  .masthead nav { font-size: 14px; }
+  .masthead nav a { margin-left: 14px; }
+  .masthead nav a:first-child { margin-left: 0; }
+  .lede { margin: 10px 0 0; font-size: 18px; max-width: 62ch; }
+
+  .callout {
+    margin: 28px 0 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 1px solid var(--rule-strong);
+  }
+  .callout > div { padding: 14px 16px; }
+  .callout > div + div { border-left: 1px solid var(--rule-strong); }
+  .callout .n { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .callout .l { font-size: 14px; color: var(--muted); }
+  .callout-note { font-size: 14px; color: var(--muted); margin: 8px 0 0; }
+
+  /* Section heads */
+  h2.sec {
+    margin: 56px 0 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--rule-strong);
+    padding-bottom: 6px;
+  }
+
+  pre.diagram {
+    margin: 20px 0 0;
+    padding: 16px;
+    background: var(--code-bg);
+    font-size: 13px;
+    line-height: 1.45;
+    overflow-x: auto;
+  }
+
+  /* Project entries */
+  .proj { padding: 28px 0; border-bottom: 1px solid var(--rule); }
+  .proj:last-child { border-bottom: 0; }
+  .proj-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .idx { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; color: var(--muted); font-size: 14px; }
+  .proj h3 { margin: 0; font-size: 20px; }
+  .proj h3 a { color: var(--ink); text-decoration: none; }
+  .proj h3 a:hover { text-decoration: underline; }
+  .tag {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    border: 1px solid var(--rule);
+    padding: 0 6px;
+    color: var(--muted);
+  }
+  .proj p { margin: 10px 0 0; max-width: 66ch; }
+
+  table.spec { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 14px; }
+  table.spec td { padding: 6px 0; border-top: 1px solid var(--rule); vertical-align: top; }
+  table.spec tr:last-child td { border-bottom: 1px solid var(--rule); }
+  table.spec td.k { color: var(--muted); width: 42%; padding-right: 16px; }
+  table.spec td.v { font-variant-numeric: tabular-nums; }
+
+  .links { margin-top: 12px; font-size: 14px; }
+  .links a + a { margin-left: 14px; }
+
+  footer { margin-top: 56px; border-top: 1px solid var(--rule-strong); padding-top: 12px; font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+  @media (max-width: 560px) {
+    .page { padding-top: 28px; }
+    h1 { font-size: 24px; }
+    .lede { font-size: 16px; }
+    .callout { grid-template-columns: 1fr; }
+    .callout > div + div { border-left: 0; border-top: 1px solid var(--rule-strong); }
+    table.spec td.k { width: 46%; }
+    pre.diagram .d { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="masthead">
+    <h1>Jusman0</h1>
+    <nav>
+      <a href="#chain">Projects</a>
+      <a href="#other">Other</a>
+      <a href="https://github.com/Jusman0">GitHub</a>
+    </nav>
+  </div>
+  <p class="lede">I build int8 neural networks and run them on hardware: first on resistors, then on an Arduino UNO, then in Verilog, then on an FPGA. Every result is checked bit-exact against a Python golden model.</p>
+</header>
+
+<div class="callout">
+  <div>
+    <div class="n">~491,000</div>
+    <div class="l">clocks per MNIST image on an Arduino UNO</div>
+  </div>
+  <div>
+    <div class="n">273</div>
+    <div class="l">clocks per image on my tiny-tensor-core</div>
+  </div>
+</div>
+<p class="callout-note">Same 196 → 32 → 10 network, same weights, same predictions on all 10,000 test images.</p>
+
+<h2 class="sec" id="chain">The projects, in order</h2>
+
+<pre class="diagram" aria-label="Diagram of how the projects build on each other">
+ 01 analog-neuron<span class="d">         resistors add by Kirchhoff's law</span>
+      │
+ 02 tinyml-mnist-uno<span class="d">      int8 MLP on an ATmega328P</span>
+      │
+ 03 dp4a-unit<span class="d">             4 int8 multiply-adds per operation</span>
+      │
+ 04 tiny-tensor-core<span class="d">      the whole network, 32 parallel lanes</span>
+      │
+ 05 int8-rollout-engine<span class="d">   32 imagined futures per tick, on an FPGA</span>
+</pre>
+
+<section>
+
+  <article class="proj">
+    <div class="proj-head">
+      <span class="idx">01</span>
+      <h3><a href="https://github.com/Jusman0/analog-neuron">analog-neuron</a></h3>
+      <span class="tag">Arduino · Python</span>
+    </div>
+    <p>A neuron's weighted sum done by resistors instead of a processor. Inputs are voltages, weights are conductances, and Kirchhoff's current law does the multiply-accumulate. Stage 1 is built and measured on a breadboard; stage 2 (weighted inputs, bias, op-amp activation) is designed and its firmware compiled.</p>
+    <table class="spec">
+      <tr><td class="k">Stage 1 error vs. ideal</td><td class="v">≤ 2.3 ADC steps</td></tr>
+      <tr><td class="k">Weight mismatch</td><td class="v">~0.4%</td></tr>
+      <tr><td class="k">Repeatability</td><td class="v">within 1 step over 7 cycles</td></tr>
+    </table>
+    <div class="links"><a href="https://github.com/Jusman0/analog-neuron">Source</a></div>
+  </article>
+
+  <article class="proj">
+    <div class="proj-head">
+      <span class="idx">02</span>
+      <h3><a href="https://github.com/Jusman0/tinyml-mnist-uno">tinyml-mnist-uno</a></h3>
+      <span class="tag">C · PyTorch</span>
+    </div>
+    <p>A handwritten-digit classifier trained in PyTorch, quantized to int8, and run on an ATmega328P: 8-bit, 16 MHz, 2 KB of SRAM, no FPU. Weights stream from flash a byte at a time with <code>pgm_read_byte</code>.</p>
+    <table class="spec">
+      <tr><td class="k">Model</td><td class="v">MLP 196 → 32 → 10, 6,634 params</td></tr>
+      <tr><td class="k">int8 test accuracy</td><td class="v">96.5%</td></tr>
+      <tr><td class="k">Latency on the UNO</td><td class="v">30.7 ms / image</td></tr>
+      <tr><td class="k">SRAM for buffers</td><td class="v">268 B</td></tr>
+    </table>
+    <div class="links"><a href="https://github.com/Jusman0/tinyml-mnist-uno">Source</a></div>
+  </article>
+
+  <article class="proj">
+    <div class="proj-head">
+      <span class="idx">03</span>
+      <h3><a href="https://github.com/Jusman0/dp4a-unit">dp4a-unit</a></h3>
+      <span class="tag">Verilog</span>
+    </div>
+    <p>A Verilog DP4A: four int8 multiplies summed into a 32-bit accumulator in one operation, the instruction NVIDIA added to Pascal GPUs. One 9×9 signed multiplier covers every signed/unsigned mode, and it computes layer 1 of the MNIST network above.</p>
+    <table class="spec">
+      <tr><td class="k">Random + edge-case vectors</td><td class="v">10,000 / 10,000 bit-exact</td></tr>
+      <tr><td class="k">MNIST layer 1 accumulators</td><td class="v">160 / 160 match NumPy</td></tr>
+      <tr><td class="k">Max clock, iCE40 HX8K</td><td class="v">~51.6 MHz → ~88.5 MHz pipelined</td></tr>
+      <tr><td class="k">Resources, <code>dp4a_pipe</code></td><td class="v">1,043 LUT4s, 138 FFs</td></tr>
+    </table>
+    <div class="links"><a href="https://github.com/Jusman0/dp4a-unit">Source</a></div>
+  </article>
+
+  <article class="proj">
+    <div class="proj-head">
+      <span class="idx">04</span>
+      <h3><a href="https://github.com/Jusman0/tiny-tensor-core">tiny-tensor-core</a></h3>
+      <span class="tag">Verilog</span>
+    </div>
+    <p>The whole MNIST network in hardware: 32 parallel multiply-accumulate lanes, integer-only requantization between layers (one fixed-point multiply and a shift), and an argmax that outputs the digit.</p>
+    <table class="spec">
+      <tr><td class="k">All 10,000 MNIST test images</td><td class="v">10,000 / 10,000 bit-exact</td></tr>
+      <tr><td class="k">Accuracy</td><td class="v">96.48%, no prediction differs</td></tr>
+      <tr><td class="k">Clocks per image</td><td class="v">273</td></tr>
+      <tr><td class="k">ECP5-45F, post-route</td><td class="v">~50 MHz, ~5.5 µs / image</td></tr>
+    </table>
+    <div class="links"><a href="https://github.com/Jusman0/tiny-tensor-core">Source</a></div>
+  </article>
+
+  <article class="proj">
+    <div class="proj-head">
+      <span class="idx">05</span>
+      <h3><a href="https://github.com/Jusman0/int8-rollout-engine">int8-rollout-engine</a></h3>
+      <span class="tag">Verilog · Python · CUDA</span>
+    </div>
+    <p>Sampling-based model-predictive control with the rollouts in hardware. Every control tick, 32 int8 lanes imagine 32 futures of a pendulum through a small learned physics model, score them, and return the best plan. An 8-lane build runs on a real Tang Nano 20K FPGA, choosing every action in a hardware-in-the-loop closed loop.</p>
+    <table class="spec">
+      <tr><td class="k">Recorded planner decisions</td><td class="v">4,000 / 4,000 bit-exact</td></tr>
+      <tr><td class="k">Closed loop, RTL in charge</td><td class="v">20 / 20 episode returns identical</td></tr>
+      <tr><td class="k">Clocks per decision</td><td class="v">1,281 (32 lanes, H = 15)</td></tr>
+      <tr><td class="k">Planted bugs caught</td><td class="v">10 / 10</td></tr>
+      <tr><td class="k">CUDA port, RTX 3060</td><td class="v">bit-exact</td></tr>
+    </table>
+    <div class="links"><a href="https://github.com/Jusman0/int8-rollout-engine">Source</a> <a href="https://github.com/Jusman0/int8-rollout-engine/blob/main/board/README.md">FPGA results</a></div>
+  </article>
+
+</section>
+
+<h2 class="sec" id="other">Other</h2>
+
+<section>
+
+  <article class="proj">
+    <div class="proj-head">
+      <h3><a href="https://github.com/Jusman0/hackforge">hackforge</a></h3>
+      <span class="tag">JavaScript</span>
+    </div>
+    <p>A hackathon harness for Claude Code. It turns a theme into a submission: live web research, an idea tournament scored against the event's rubric, a demo-first build with a separate QA judge, a mock judging panel, and a fact-checked write-up, with a deadline clock throughout.</p>
+    <table class="spec">
+      <tr><td class="k">Surface</td><td class="v">12 skills, 8 agents, 4 hooks, 5 workflows</td></tr>
+      <tr><td class="k">Human gates</td><td class="v">idea lock, scope lock, submit</td></tr>
+    </table>
+    <div class="links"><a href="https://github.com/Jusman0/hackforge">Source</a></div>
+  </article>
+
+  <article class="proj">
+    <div class="proj-head">
+      <h3><a href="https://github.com/Jusman0/ultrasonic-proximity-alarm">ultrasonic-proximity-alarm</a></h3>
+      <span class="tag">Arduino · Python</span>
+    </div>
+    <p>An HC-SR04 and an active buzzer on an Arduino UNO. The original sketch was lost, so I rebuilt it from a video of the serial monitor, down to the distance formula, which is the only common one that reproduces every logged reading.</p>
+    <table class="spec">
+      <tr><td class="k">Logged readings matched</td><td class="v">19 / 19</td></tr>
+      <tr><td class="k">Odds of a random formula matching</td><td class="v">~1 in 20,000</td></tr>
+    </table>
+    <div class="links"><a href="https://github.com/Jusman0/ultrasonic-proximity-alarm">Source</a></div>
+  </article>
+
+</section>
+
+<footer>
+  <span>Jusman0</span>
+  <a href="https://github.com/Jusman0">github.com/Jusman0</a>
+</footer>
+
+</div>
+</body>
+</html>
