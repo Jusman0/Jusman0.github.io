@@ -3,171 +3,285 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Jusman0</title>
-<meta name="description" content="int8 neural networks in hardware, from an Arduino UNO to Verilog to an FPGA. Live simulations of the real models.">
-<link rel="stylesheet" href="assets/site.css">
+<title>Jusman0 — int8 hardware</title>
+<meta name="description" content="Neural networks in int8 hardware: an Arduino UNO, Verilog, and a real FPGA, each checked bit-exact against Python. With live simulations of the real models.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/site.css?v=7">
 </head>
 <body>
 
 <nav class="top">
   <div class="wrap top-in">
-    <a class="brand" href="#">Jusman0</a>
+    <a class="brand" href="#top">Jusman0</a>
     <div class="links">
-      <a href="#planner">Planner</a>
-      <a href="#digits">Digits</a>
-      <a href="#projects">Projects</a>
-      <a href="https://github.com/Jusman0">GitHub</a>
+      <a href="#core" class="opt">Core</a>
+      <a href="#lab">Lab</a>
+      <a href="#silicon">Silicon</a>
+      <a href="#about" class="opt">About</a>
+      <a href="#contact">Contact</a>
     </div>
   </div>
+  <div class="progress" id="progress"></div>
 </nav>
 
-<!-- ============================== HERO / PLANNER ============================== -->
-<header class="hero" id="planner">
-  <div class="wrap hero-grid">
-    <div class="hero-text">
-      <p class="kicker">int8 · Verilog · FPGA</p>
-      <h1>I put neural networks into hardware.</h1>
-      <p class="lede">This pendulum is being balanced by a port of my <a href="https://github.com/Jusman0/int8-rollout-engine">int8-rollout-engine</a>. Twenty times a second it imagines 32 possible futures through a small learned physics model, scores each one, and acts on the best.</p>
-      <p class="lede">The arcs are those 32 futures. The orange one wins.</p>
-      <p class="hint"><span class="mono">Drag the pendulum</span> to knock it over and watch it recover.</p>
+<!-- ============================== HERO ============================== -->
+<header class="hero" id="top">
+  <svg class="grid-bg" aria-hidden="true"><defs><pattern id="g" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M48 0H0V48" fill="none" stroke="#1a201b" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(#g)"/></svg>
 
-      <div class="readout">
-        <div><span class="k">θ (int8)</span><span class="v" id="r-theta">0</span></div>
-        <div><span class="k">ω (int8)</span><span class="v" id="r-omega">0</span></div>
-        <div><span class="k">torque</span><span class="v" id="r-u">0</span></div>
-        <div><span class="k">winning lane</span><span class="v" id="r-best">0</span></div>
-        <div><span class="k">its cost</span><span class="v" id="r-cost">0</span></div>
-        <div><span class="k">clocks / decision</span><span class="v" id="r-clk">1,281</span></div>
+  <div class="glyphs" aria-hidden="true">
+    <a class="glyph" href="#lab" style="left:4%;top:9%"><svg viewBox="0 0 24 24"><path d="M1 12h5l1.5-4 3 8 3-8 3 8 1.5-4h5"/></svg>R-NET</a>
+    <a class="glyph" href="#lab" style="left:27%;top:8%"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18"/><path d="M3 6h3M3 10h3M3 14h3M3 18h3M18 6h3M18 10h3M18 14h3M18 18h3"/></svg>UNO</a>
+    <a class="glyph" href="#lab" style="left:48%;top:10%"><svg viewBox="0 0 24 24"><path d="M2 4l8 6M2 9l8 3M2 15l8-3M2 20l8-6"/><circle cx="14" cy="12" r="4"/><path d="M12.5 12h3M14 10.5v3M18 12h5"/></svg>DP4A</a>
+    <a class="glyph" href="#core" style="left:94%;top:14%"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18"/></svg>TTC·32</a>
+    <a class="glyph" href="#silicon" style="left:94%;top:70%"><svg viewBox="0 0 24 24"><circle cx="12" cy="20" r="1.5"/><path d="M12 20L7 6"/><circle cx="7" cy="5" r="2.2"/><path d="M4 12a9 9 0 0 1 16 0" stroke-dasharray="2 2"/></svg>MPC</a>
+    <a class="glyph" href="#also" style="left:58%;top:91%"><svg viewBox="0 0 24 24"><path d="M3 12h3M8 7a7 7 0 0 1 0 10M12 4a11 11 0 0 1 0 16M16 1.5a14 14 0 0 1 0 21"/></svg>SONAR</a>
+    <a class="glyph" href="#also" style="left:76%;top:92%"><svg viewBox="0 0 24 24"><path d="M3 9h13l3-3h2v6h-2l-3-2H9v3l-3 3v3h10M6 19h12"/></svg>FORGE</a>
+  </div>
+
+  <div class="wrap hero-in">
+    <div>
+      <p class="label"><span class="c">int8</span> · Verilog · FPGA</p>
+      <h1>I put neural networks into <em>hardware.</em></h1>
+      <p class="sub">Quantized networks on an Arduino UNO, in Verilog, and on a real FPGA, each checked bit-exact against a Python golden model. One of them is running live on this page: my <a href="lab/planner.html">int8 planner</a>, balancing a pendulum.</p>
+      <div class="stats">
+        <div><b>10,000</b><span>MNIST images bit-exact</span></div>
+        <div><b>273</b><span>clocks per image</span></div>
+        <div><b>4,000</b><span>decisions on a real FPGA</span></div>
+        <div><b>8</b><span>public repos</span></div>
       </div>
     </div>
-
-    <div class="hero-sim">
-      <canvas id="pend" aria-label="Pendulum balanced by the int8 planner, with 32 imagined futures drawn as arcs"></canvas>
-      <div class="controls">
-        <div class="seg" role="group" aria-label="Lanes">
-          <span class="seg-l">lanes</span>
-          <button data-lanes="8">8</button><button data-lanes="16">16</button><button data-lanes="32" class="on">32</button>
-        </div>
-        <div class="seg" role="group" aria-label="Horizon">
-          <span class="seg-l">horizon</span>
-          <button data-h="5">5</button><button data-h="15" class="on">15</button>
-        </div>
-        <button class="btn" id="drop">Drop it</button>
-        <button class="btn" id="pause">Pause</button>
-      </div>
-      <div class="lanes" id="lanes" aria-label="Cost of each lane this tick"></div>
-      <p class="cap">Each cell is one hardware lane's total imagined cost this tick. Darker = cheaper.</p>
+    <div class="hud">
+      <canvas id="hud" aria-label="Live pendulum balanced by the int8 planner. Drag it to push it."></canvas>
+      <div class="hud-read" id="hud-read">θ 0 · ω 0 · LANE 0/32 · 1,281 CLK</div>
+      <div class="hud-hint">32 imagined futures per tick · drag the pendulum</div>
     </div>
   </div>
 </header>
 
-<!-- ============================== DIGITS ============================== -->
-<section class="sec" id="digits">
+<!-- ============================== STATEMENT ============================== -->
+<section class="say">
   <div class="wrap">
-    <div class="sec-head">
-      <p class="kicker">tiny-tensor-core</p>
-      <h2>Draw a digit. Watch 273 clocks classify it.</h2>
-      <p class="sec-lede">This is my 6,634-parameter MNIST network with its real int8 weights, using the same integer math as the Verilog: 32 multiply-accumulate lanes, a fixed-point requantize, and an argmax. My JS port matches the Python golden model on all 10,000 test images.</p>
+    <p data-words data-hl="int8|bit|for|bit,">Almost all the work in a neural network is int8 dot products. I build the hardware that does them, and check every answer bit for bit, against Python.</p>
+  </div>
+</section>
+
+<!-- ============================== SCROLLYTELLING: tiny-tensor-core ============================== -->
+<section class="story" id="core">
+  <div class="wrap story-in">
+    <div class="story-text">
+      <p class="label"><span class="c">tiny-tensor-core</span> · Verilog · ECP5</p>
+      <h2>One digit, 273 clocks.</h2>
+      <p class="muted" style="max-width:44ch">My 6,634-parameter MNIST network as a chip. Scroll, and the figure runs the real int8 weights through the same schedule as the Verilog, clock by clock.</p>
+      <ol class="steps">
+        <li class="step" data-from="0" data-to="197"><span class="n">01</span><div><h3>Layer 1 · 197 clocks</h3><p>One pixel per clock is broadcast to 32 multiply-accumulate lanes, each holding one neuron's weights. 6,272 MACs, 32 at a time.</p></div></li>
+        <li class="step" data-from="197" data-to="229"><span class="n">02</span><div><h3>Requantize · 32 clocks</h3><p>No floats. Each accumulator becomes a 0–127 activation with one fixed-point multiply and a shift: (acc · 31,942 + B + 2²³) ≫ 24. The clamp at 0 is the ReLU.</p></div></li>
+        <li class="step" data-from="229" data-to="262"><span class="n">03</span><div><h3>Layer 2 · 33 clocks</h3><p>The 32 activations stream into 10 accumulators, one per digit.</p></div></li>
+        <li class="step" data-from="262" data-to="273"><span class="n">04</span><div><h3>Argmax · 11 clocks</h3><p>Ten compares, and out comes the digit. The Arduino UNO needed about 491,000 clocks for the same network; the predictions match on all 10,000 test images.</p><p style="margin-top:18px"><a class="more" href="lab/digits.html">Draw your own digit →</a></p></div></li>
+      </ol>
     </div>
-
-    <div class="digit-grid">
-      <div class="panel">
-        <div class="panel-h"><span>Input</span><button class="link" id="clear">Clear</button></div>
-        <canvas id="draw" width="280" height="280" aria-label="Drawing area"></canvas>
-        <div class="samples" id="samples" aria-label="Real MNIST test images"></div>
-        <p class="cap">Or pick a real MNIST test image.</p>
-      </div>
-
-      <div class="panel">
-        <div class="panel-h"><span>What the chip sees</span><span class="muted mono">14 × 14, 0–127</span></div>
-        <canvas id="seen" width="196" height="196" aria-label="Pooled 14 by 14 input"></canvas>
-        <div class="panel-h sub"><span>32 lanes</span><span class="muted mono" id="phase-l">idle</span></div>
-        <canvas id="hid" width="320" height="90" aria-label="32 hidden lanes"></canvas>
-      </div>
-
-      <div class="panel">
-        <div class="panel-h"><span>Output</span><span class="muted mono">logits</span></div>
-        <div class="answer"><span id="digit">–</span></div>
-        <div id="logits" class="logits"></div>
-      </div>
-    </div>
-
-    <div class="clock">
-      <div class="clock-top">
-        <span class="mono">clock <b id="clk">0</b> / 273</span>
-        <span class="muted" id="uno"></span>
-      </div>
-      <div class="track" id="track">
-        <div class="ph" style="flex:197"><span>Layer 1 · 197</span></div>
-        <div class="ph" style="flex:32"><span>Requant · 32</span></div>
-        <div class="ph" style="flex:33"><span>Layer 2 · 33</span></div>
-        <div class="ph" style="flex:11"><span>Argmax · 11</span></div>
-        <div class="cursor" id="cursor"></div>
+    <div class="story-fig">
+      <div class="fig">
+        <div class="fig-grid">
+          <div>
+            <div class="fig-h"><span>input · 14×14</span><span id="s-phase">idle</span></div>
+            <canvas class="seen" id="s-seen" width="196" height="196"></canvas>
+            <div class="fig-h" style="margin-top:12px"><span>32 lanes</span><span>acc → h</span></div>
+            <canvas class="hid" id="s-hid"></canvas>
+          </div>
+          <div>
+            <div class="answer" id="s-digit">–</div>
+            <div class="logits" id="s-logits"></div>
+          </div>
+        </div>
+        <div class="pick" id="s-pick" aria-label="Choose a real MNIST test image"></div>
+        <div class="clock">
+          <div class="clock-top"><span>clock <b id="s-clk">0</b> / 273</span><span>UNO: ~491,000</span></div>
+          <div class="track" id="s-track">
+            <div class="ph" style="flex:197"><span>layer 1</span></div>
+            <div class="ph" style="flex:32"><span>requant</span></div>
+            <div class="ph" style="flex:33"><span>layer 2</span></div>
+            <div class="ph" style="flex:11"><span>max</span></div>
+            <div class="cursor" id="s-cursor"></div>
+          </div>
+        </div>
+        <div class="fig-cap">Fig. — real MNIST test images, real int8 weights, integer math only.</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ============================== PROJECTS ============================== -->
-<section class="sec" id="projects">
-  <div class="wrap">
-    <div class="sec-head">
-      <p class="kicker">Projects</p>
-      <h2>One network, five ways down to the metal.</h2>
-      <p class="sec-lede">Each project builds on the one before it, and every result is checked bit-exact against a Python golden model.</p>
+<!-- ============================== LAB ============================== -->
+<section class="lab" id="lab">
+  <div class="wrap lab-in">
+    <div class="lab-head">
+      <p class="label">Lab · resistors → AVR → RTL → FPGA</p>
+      <h2>Five ways down to the metal.</h2>
+      <p>Each project takes the one before it a level lower, and every one is checked against a golden model before it counts.</p>
+      <a class="more" href="lab/planner.html">Open the planner bench →</a>
+      <div class="rail-nav"><button data-dir="-1" aria-label="Previous">←</button><button data-dir="1" aria-label="Next">→</button></div>
     </div>
 
-    <ol class="cards">
-      <li class="card">
-        <span class="n">01</span>
-        <h3><a href="https://github.com/Jusman0/analog-neuron">analog-neuron</a></h3>
-        <p>A neuron's weighted sum done by resistors. Kirchhoff's current law does the multiply-accumulate on a breadboard.</p>
-        <div class="stat"><b>≤ 2.3</b> ADC steps from ideal</div>
-      </li>
-      <li class="card">
-        <span class="n">02</span>
-        <h3><a href="https://github.com/Jusman0/tinyml-mnist-uno">tinyml-mnist-uno</a></h3>
-        <p>The MNIST network above, trained in PyTorch, quantized to int8 and run on an ATmega328P with 2 KB of SRAM.</p>
-        <div class="stat"><b>30.7 ms</b> per image · 96.5%</div>
-      </li>
-      <li class="card">
-        <span class="n">03</span>
-        <h3><a href="https://github.com/Jusman0/dp4a-unit">dp4a-unit</a></h3>
-        <p>NVIDIA's DP4A in Verilog: four int8 multiplies into a 32-bit accumulator per operation, every sign mode.</p>
-        <div class="stat"><b>10,000 / 10,000</b> bit-exact</div>
-      </li>
-      <li class="card">
-        <span class="n">04</span>
-        <h3><a href="https://github.com/Jusman0/tiny-tensor-core">tiny-tensor-core</a></h3>
-        <p>The whole network in hardware: 32 MAC lanes, integer requantization, argmax. Placed and routed on an ECP5.</p>
-        <div class="stat"><b>273</b> clocks per image</div>
-      </li>
-      <li class="card">
-        <span class="n">05</span>
-        <h3><a href="https://github.com/Jusman0/int8-rollout-engine">int8-rollout-engine</a></h3>
-        <p>The planner at the top of this page, in Verilog. An 8-lane build runs on a Tang Nano 20K FPGA, hardware-in-the-loop.</p>
-        <div class="stat"><b>4,000 / 4,000</b> decisions bit-exact</div>
-      </li>
-    </ol>
+    <div class="rail" id="rail">
+      <article class="card"><i class="br1"></i><i class="br2"></i>
+        <div class="art"><img src="assets/img/analog-breadboard.jpg" alt="Resistor network on a breadboard wired to an Arduino UNO" loading="lazy"></div>
+        <p class="label" style="margin-top:14px">01 · analog · breadboard</p>
+        <h3>analog-neuron</h3>
+        <p>A neuron's weighted sum done by resistors instead of a processor. Inputs are voltages, weights are conductances, and Kirchhoff's current law does the multiply-accumulate.</p>
+        <div class="fact">within <b>2.3 ADC steps</b> of ideal · weights matched to ~0.4%</div>
+        <div class="acts"><a class="ext" href="https://github.com/Jusman0/analog-neuron">github.com/Jusman0/analog-neuron ↗</a></div>
+      </article>
 
-    <h3 class="also">Also</h3>
-    <ul class="also-list">
-      <li><a href="https://github.com/Jusman0/hackforge">hackforge</a> A Claude Code harness for hackathons: research, idea tournament, build with a separate QA judge, mock judging, fact-checked write-up.</li>
-      <li><a href="https://github.com/Jusman0/ultrasonic-proximity-alarm">ultrasonic-proximity-alarm</a> An HC-SR04 alarm whose lost sketch I rebuilt from a video, down to the one formula that reproduces all 19 logged readings.</li>
+      <article class="card"><i class="br1"></i><i class="br2"></i>
+        <div class="art"><svg viewBox="0 0 320 200" fill="none" stroke="#d4844a" stroke-width="1.2">
+          <rect x="95" y="40" width="130" height="120" stroke="#8b9087"/>
+          <path d="M75 52h20M75 68h20M75 84h20M75 100h20M75 116h20M75 132h20M75 148h20M225 52h20M225 68h20M225 84h20M225 100h20M225 116h20M225 132h20M225 148h20" stroke="#8b9087"/>
+          <circle cx="110" cy="54" r="4" stroke="#8b9087"/>
+          <text x="160" y="92" fill="#ebe7dd" stroke="none" font-family="ui-monospace,Menlo,monospace" font-size="12" text-anchor="middle">ATmega328P</text>
+          <text x="160" y="112" fill="#d4844a" stroke="none" font-family="ui-monospace,Menlo,monospace" font-size="11" text-anchor="middle">196 → 32 → 10</text>
+          <text x="160" y="130" fill="#8b9087" stroke="none" font-family="ui-monospace,Menlo,monospace" font-size="10" text-anchor="middle">16 MHz · 2 KB SRAM</text>
+        </svg></div>
+        <p class="label" style="margin-top:14px">02 · C · PyTorch · AVR</p>
+        <h3>tinyml-mnist-uno</h3>
+        <p>A digit classifier trained in PyTorch, quantized to int8 and run on an 8-bit microcontroller with no FPU. The weights stream from flash a byte at a time.</p>
+        <div class="fact"><b>96.5%</b> int8 accuracy · <b>30.7 ms</b> per image · 268 B of buffers</div>
+        <div class="acts"><a class="ext" href="https://github.com/Jusman0/tinyml-mnist-uno">github.com/Jusman0/tinyml-mnist-uno ↗</a></div>
+      </article>
+
+      <article class="card"><i class="br1"></i><i class="br2"></i>
+        <div class="art"><svg viewBox="0 0 320 200" fill="none" stroke-width="1.2" font-family="ui-monospace,Menlo,monospace" font-size="10">
+          <g stroke="#8b9087"><path d="M30 40h60M30 80h60M30 120h60M30 160h60"/></g>
+          <g stroke="#d4844a"><rect x="90" y="28" width="40" height="24"/><rect x="90" y="68" width="40" height="24"/><rect x="90" y="108" width="40" height="24"/><rect x="90" y="148" width="40" height="24"/>
+          <path d="M130 40h30l30 50M130 80h30l30 14M130 120h30l30-14M130 160h30l30-50"/><circle cx="205" cy="100" r="16"/><path d="M221 100h70"/></g>
+          <g fill="#ebe7dd" stroke="none" text-anchor="middle"><text x="110" y="44">×</text><text x="110" y="84">×</text><text x="110" y="124">×</text><text x="110" y="164">×</text><text x="205" y="104">Σ+c</text></g>
+          <g fill="#8b9087" stroke="none"><text x="30" y="34">a0·b0</text><text x="30" y="74">a1·b1</text><text x="30" y="114">a2·b2</text><text x="30" y="154">a3·b3</text><text x="262" y="92">d</text></g>
+        </svg></div>
+        <p class="label" style="margin-top:14px">03 · Verilog · iCE40</p>
+        <h3>dp4a-unit</h3>
+        <p>NVIDIA's DP4A instruction in Verilog: four int8 multiplies summed into a 32-bit accumulator in one operation, with one 9×9 multiplier covering every sign mode.</p>
+        <div class="fact"><b>10,000 / 10,000</b> bit-exact · ~51.6 → ~88.5 MHz pipelined</div>
+        <div class="acts"><a class="ext" href="https://github.com/Jusman0/dp4a-unit">github.com/Jusman0/dp4a-unit ↗</a></div>
+      </article>
+
+      <article class="card"><i class="br1"></i><i class="br2"></i>
+        <div class="art"><svg viewBox="0 0 320 200" fill="none" stroke-width="1.2" font-family="ui-monospace,Menlo,monospace" font-size="10" id="ttc-art"></svg></div>
+        <p class="label" style="margin-top:14px">04 · Verilog · ECP5</p>
+        <h3>tiny-tensor-core</h3>
+        <p>The whole MNIST network as a chip: 32 parallel MAC lanes, integer-only requantization between layers, and an argmax that outputs the digit.</p>
+        <div class="fact"><b>273</b> clocks per image · <b>96.48%</b>, no prediction differs</div>
+        <div class="acts"><a class="more" href="lab/digits.html">How it works →</a><a class="ext" href="https://github.com/Jusman0/tiny-tensor-core">github ↗</a></div>
+      </article>
+
+      <article class="card"><i class="br1"></i><i class="br2"></i>
+        <div class="art"><svg viewBox="0 0 320 200" fill="none" stroke-width="1.2" id="mpc-art"></svg></div>
+        <p class="label" style="margin-top:14px">05 · Verilog · CUDA · Tang Nano 20K</p>
+        <h3>int8-rollout-engine</h3>
+        <p>Sampling-based model-predictive control with the rollouts in hardware: every tick, 32 int8 lanes imagine 32 futures of a pendulum and hand back the best plan.</p>
+        <div class="fact"><b>4,000 / 4,000</b> decisions bit-exact on the FPGA · <b>1,281</b> clocks / decision</div>
+        <div class="acts"><a class="more" href="lab/planner.html">How it works →</a><a class="ext" href="https://github.com/Jusman0/int8-rollout-engine">github ↗</a></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SILICON ============================== -->
+<section class="silicon" id="silicon">
+  <div class="wrap si-in">
+    <div>
+      <p class="label"><span class="c">int8-rollout-engine</span> · on the board · Oct 14, 2026</p>
+      <h2>The simulator said yes. The chip said no.</h2>
+      <p>The 8-lane planner went onto a Tang Nano 20K. It ran the right sequence, with the clock count exact every time, and got <b>0 of 20</b> answers right.</p>
+      <p>A/B builds narrowed it down. Turning off the carry chains changed nothing. Building the multipliers from LUTs instead of the chip's DSP blocks made it <b>bit-exact</b>. RTL simulation and the timing report never showed the fault. Checking the chip's answers did.</p>
+      <p>Then a logic analyzer on the <code class="mono">busy</code> pin: <b>186.000 µs</b> per decision, which is 5,022 clocks at 27 MHz, exactly the RTL's count.</p>
+      <a class="more" href="https://github.com/Jusman0/int8-rollout-engine/blob/main/board/README.md">Read the board log →</a>
+    </div>
+    <div>
+      <table class="ab">
+        <tr><td>default build</td><td>DSP on · carry on</td><td class="no">✗ 0 / 20</td></tr>
+        <tr><td><span class="mono">-noalu</span></td><td>DSP on · carry off</td><td class="no">✗ same wrong bytes</td></tr>
+        <tr><td><span class="mono">-nodsp</span></td><td>LUT multipliers</td><td class="ok">✓ 20 / 20</td></tr>
+        <tr><td><span class="mono">-nodsp</span> replay</td><td>every recorded decision</td><td class="ok">✓ 4,000 / 4,000</td></tr>
+        <tr><td><span class="mono">-nodsp</span> closed loop</td><td>FPGA picks every action</td><td class="ok">✓ 20 / 20 episodes</td></tr>
+      </table>
+      <div class="scope">
+        <svg viewBox="0 0 520 170" font-family="ui-monospace,Menlo,monospace" font-size="10">
+          <text x="0" y="12" fill="#8b9087">busy · pin 73 · ~60 ms per tick</text>
+          <path d="M0 52 H70 V30 H72 V52 H200 V30 H202 V52 H330 V30 H332 V52 H460 V30 H462 V52 H520" fill="none" stroke="#6faf87" stroke-width="1.5"/>
+          <text x="0" y="86" fill="#8b9087">one pulse, zoomed</text>
+          <path d="M0 140 H120 V100 H400 V140 H520" fill="none" stroke="#d4844a" stroke-width="1.8"/>
+          <path d="M120 156 H400 M120 151 V161 M400 151 V161" stroke="#ebe7dd" stroke-width="1"/>
+          <text x="260" y="122" fill="#ebe7dd" text-anchor="middle" font-size="13">186.000 µs</text>
+          <text x="260" y="168" fill="#8b9087" text-anchor="middle">5,022 clocks @ 27 MHz</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== ALSO ============================== -->
+<section class="also" id="also">
+  <div class="wrap">
+    <p class="label">Also built</p>
+    <div class="also-grid">
+      <div class="also-item">
+        <div class="art"><svg viewBox="0 0 220 165" fill="none" stroke-width="1.2" font-family="ui-monospace,Menlo,monospace" font-size="9">
+          <g stroke="#8b9087"><rect x="8" y="30" width="54" height="24"/><rect x="83" y="30" width="54" height="24"/><rect x="158" y="30" width="54" height="24"/><rect x="8" y="110" width="54" height="24"/><rect x="83" y="110" width="54" height="24"/><rect x="158" y="110" width="54" height="24"/>
+          <path d="M62 42h21M137 42h21M185 54v26H35v30M62 122h21M137 122h21"/></g>
+          <g stroke="#d4844a"><path d="M185 74l-5 6 5 6 5-6z"/><path d="M72 116l-5 6 5 6 5-6z"/><path d="M185 134v14"/><path d="M185 148l-5 6 5 6 5-6z"/></g>
+          <g fill="#ebe7dd"><text x="35" y="46" text-anchor="middle">kickoff</text><text x="110" y="46" text-anchor="middle">research</text><text x="185" y="46" text-anchor="middle">ideate</text><text x="35" y="126" text-anchor="middle">spec</text><text x="110" y="126" text-anchor="middle">build</text><text x="185" y="126" text-anchor="middle">judge·ship</text></g>
+          <g fill="#d4844a"><text x="195" y="83">gate A</text><text x="60" y="108">B</text><text x="195" y="158">C</text></g>
+        </svg></div>
+        <div>
+          <p class="label">Claude Code plugin · JavaScript</p>
+          <h3>hackforge</h3>
+          <p>A hackathon harness: live research, an idea tournament scored against the event's rubric, a demo-first build with a separate QA judge, a mock judging panel, and a fact-checked write-up. A deadline clock runs throughout, and a human decides at three gates.</p>
+          <a class="ext" href="https://github.com/Jusman0/hackforge">github.com/Jusman0/hackforge ↗</a>
+        </div>
+      </div>
+      <div class="also-item">
+        <div class="art"><img src="assets/img/ultrasonic-setup.jpg" alt="HC-SR04 sensor and buzzer on a breadboard with a hand approaching" loading="lazy"></div>
+        <div>
+          <p class="label">Arduino · forensics</p>
+          <h3>ultrasonic-proximity-alarm</h3>
+          <p>An HC-SR04 alarm whose sketch was lost. I rebuilt it from a video of the serial monitor, down to the distance formula: the only common one that reproduces all 19 logged readings. A random formula would match about 1 time in 20,000.</p>
+          <a class="ext" href="https://github.com/Jusman0/ultrasonic-proximity-alarm">github.com/Jusman0/ultrasonic-proximity-alarm ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="say">
+  <div class="wrap">
+    <p data-words data-hl="chip.|chip">Simulation said it worked. Timing said it worked. The chip said otherwise. So now I check the chip.</p>
+  </div>
+</section>
+
+<!-- ============================== ABOUT / CONTACT ============================== -->
+<section class="about" id="about">
+  <div class="wrap about-in">
+    <p class="label">About</p>
+    <div>
+      <p>I work where machine learning meets digital logic: I quantize networks to int8, write the Verilog that runs them, and prove the two agree.</p>
+      <div class="tools">Verilog · Icarus · Yosys · nextpnr · ECP5 · iCE40 · Gowin · Arduino · PyTorch · NumPy · CUDA · Claude Code</div>
+    </div>
+  </div>
+</section>
+
+<section class="contact" id="contact">
+  <div class="wrap">
+    <p class="label">Contact</p>
+    <h2>Let's talk.</h2>
+    <ul>
+      <li><a href="https://github.com/Jusman0">github.com/Jusman0</a></li>
     </ul>
+    <div class="foot"><span>Jusman0 · 2026</span><span>Both simulations run the real int8 weights in your browser. No frameworks, no web fonts.</span></div>
   </div>
 </section>
 
-<footer class="foot">
-  <div class="wrap foot-in">
-    <span>Jusman0</span>
-    <span class="muted">Both simulations run the real int8 weights in your browser.</span>
-    <a href="https://github.com/Jusman0">github.com/Jusman0</a>
-  </div>
-</footer>
-
-<script src="assets/models.js"></script>
-<script src="assets/engine.js"></script>
-<script src="assets/site.js"></script>
+<script src="assets/models.js?v=7"></script>
+<script src="assets/engine.js?v=7"></script>
+<script src="assets/planner.js?v=7"></script>
+<script src="assets/digits.js?v=7"></script>
+<script src="assets/home.js?v=7"></script>
 </body>
 </html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planner bench — Jusman0</title>
+<meta name="description" content="A live port of int8-rollout-engine: sampling-based model-predictive control with 32 int8 lanes, balancing a pendulum in your browser.">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css?v=7">
+</head>
+<body>
+<nav class="top"><div class="wrap top-in"><a class="brand" href="../">Jusman0</a><div class="links"><a href="../#lab">Lab</a><a href="digits.html">Digits</a><a href="https://github.com/Jusman0/int8-rollout-engine">GitHub</a></div></div></nav>
+
+<main class="page wrap">
+  <a class="crumb" href="../#lab">← Lab</a>
+  <p class="label" style="margin-top:28px"><span class="c">05</span> · int8-rollout-engine · Verilog · Tang Nano 20K</p>
+  <h1>Thirty-two futures, every tick.</h1>
+  <p class="lede">A port of the engine's integer math, matching the Python golden model exactly on 200,000 random steps. Every 50 ms it imagines 32 plans through a 3 → 16 → 2 int8 physics model, scores each one, and applies the first action of the cheapest. Drag the pendulum to push it.</p>
+
+  <div class="bench">
+    <div class="big">
+      <canvas id="pend" aria-label="Pendulum balanced by the int8 planner"></canvas>
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Lanes"><span class="seg-l">lanes</span><button data-lanes="8">8</button><button data-lanes="16">16</button><button data-lanes="32" class="on">32</button></div>
+        <div class="seg" role="group" aria-label="Horizon"><span class="seg-l">horizon</span><button data-h="5">5</button><button data-h="15" class="on">15</button></div>
+        <button class="btn" id="drop">Drop it</button>
+        <button class="btn" id="pause">Pause</button>
+      </div>
+    </div>
+    <div>
+      <div class="read">
+        <div><span class="k">θ · int8, π/128 per step</span><span class="v" id="r-theta">0</span></div>
+        <div><span class="k">ω · int8, 8/127 rad/s per step</span><span class="v" id="r-omega">0</span></div>
+        <div><span class="k">torque applied</span><span class="v" id="r-u">0</span></div>
+        <div><span class="k">winning lane</span><span class="v" id="r-best">0</span></div>
+        <div><span class="k">its imagined cost</span><span class="v" id="r-cost">0</span></div>
+        <div><span class="k">clocks per decision</span><span class="v" id="r-clk">1,281</span></div>
+      </div>
+      <div class="lanes" id="lanes"></div>
+      <p class="cap">One cell per hardware lane: its total imagined cost this tick. Brighter is cheaper. Copper is the winner.</p>
+    </div>
+  </div>
+
+  <div class="prose">
+    <h2>What each lane does</h2>
+    <p>Every lane starts from the same measured state, quantized to int8, and steps its own plan of H actions through the learned model. One imagined step is three multiply-adds into 16 hidden units, a shift and a clamp, then 16 multiply-adds into two outputs:</p>
+    <div class="formula">h[j]    = clamp((B1[j] + W1[j]·(θ, ω, u)) >>> 7, 0, 127)
+Δθ, Δω  = (B2 + W2·h) >>> (8, 7)
+θ'      = low 8 bits of θ + Δθ          (wraps, like an angle)
+ω'      = clamp(ω + Δω, −127, 127)
+cost   += θ'² + (21·ω'²) >> 5 + (u²) >> 11</div>
+    <p>The lane with the lowest total wins, ties going to the lower index exactly like the RTL's strict <code>&lt;</code>. Its plan becomes next tick's warm start: shifted one step, with the other 31 candidates sampled around it.</p>
+    <p>The hardware time per decision is <b>(32 / LANES) · (83 · H + 2) + 34</b> clocks, which is 1,281 for 32 lanes and 15 steps. The 8-lane board build takes 5,022 clocks, measured on a logic analyzer as <b>186.000 µs</b> at 27 MHz.</p>
+    <p>In the real project, the board picks every action of 20 Pendulum-v1 episodes, and all 20 returns are identical to the golden model's. Here the physics is a JS copy of Pendulum-v1, and the planner is this page.</p>
+    <p><a href="https://github.com/Jusman0/int8-rollout-engine">github.com/Jusman0/int8-rollout-engine ↗</a></p>
+  </div>
+</main>
+
+<script src="../assets/models.js?v=7"></script>
+<script src="../assets/engine.js?v=7"></script>
+<script src="../assets/planner.js?v=7"></script>
+<script>
+(function () {
+  const E = Engine, $ = (id) => document.getElementById(id), fmt = (n) => n.toLocaleString("en-US");
+  function buildLanes(n) { const el = $("lanes"); el.style.gridTemplateColumns = `repeat(${n}, 1fr)`; el.innerHTML = "<div></div>".repeat(n); }
+  const pl = Planner($("pend"), {
+    onTick(last, P) {
+      const r = last.r, cells = $("lanes").children;
+      $("r-theta").textContent = last.tq; $("r-omega").textContent = last.oq;
+      $("r-u").textContent = (2 * last.u / 127).toFixed(2) + " N·m";
+      $("r-best").textContent = r.best; $("r-cost").textContent = fmt(r.cost[r.best]);
+      if (cells.length !== r.cost.length) return;
+      const lo = Math.min(...r.cost), hi = Math.max(...r.cost);
+      for (let i = 0; i < cells.length; i++) {
+        const t = hi > lo ? (r.cost[i] - lo) / (hi - lo) : 0;
+        cells[i].className = i === r.best ? "best" : "";
+        cells[i].style.opacity = i === r.best ? 1 : (1 - 0.82 * t).toFixed(3);
+      }
+    },
+  });
+  const clk = () => { $("r-clk").textContent = fmt(E.clocks(pl.state.lanes, pl.state.H)); };
+  document.querySelectorAll("[data-lanes]").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll("[data-lanes]").forEach((x) => x.classList.toggle("on", x === b));
+    pl.setLanes(+b.dataset.lanes); buildLanes(+b.dataset.lanes); clk();
+  }));
+  document.querySelectorAll("[data-h]").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll("[data-h]").forEach((x) => x.classList.toggle("on", x === b));
+    pl.setH(+b.dataset.h); clk();
+  }));
+  $("drop").addEventListener("click", () => pl.drop());
+  $("pause").addEventListener("click", (e) => { e.target.textContent = pl.toggle() ? "Pause" : "Play"; });
+  buildLanes(32);
+})();
+</script>
+</body>
+</html>
