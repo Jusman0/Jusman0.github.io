@@ -1,0 +1,38 @@
+/* Pendulum planner demo. Page layout comes from site.css. */
+.pl-demo { border-top: 1px solid #222; border-bottom: 1px solid #222; padding: 24px 0; }
+.pl-views { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 24px; align-items: start; }
+.pl-fig { margin: 0; min-width: 0; }
+.pl-fig figcaption { color: #8a8a8a; font-size: 13px; margin-top: 8px; }
+#pend { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: none; cursor: grab; }
+#pend.grab { cursor: grabbing; }
+#chart { display: block; width: 100%; aspect-ratio: 3 / 2; }
+.pl-keys { display: block; margin-top: 4px; }
+.pl-key { display: inline-flex; align-items: center; gap: 6px; margin-right: 14px; white-space: nowrap; }
+.pl-key i { display: inline-block; width: 18px; height: 0; border-top: 1px solid #8a8a8a; }
+.pl-key i.on { border-top: 2px solid #fff; }
+
+.pl-read { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 16px; margin: 24px 0 0; }
+.pl-read div { min-width: 0; }
+.pl-read dt { color: #8a8a8a; font-size: 13px; }
+.pl-read dd { margin: 2px 0 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 15px; white-space: nowrap; }
+
+.pl-controls { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; margin-top: 24px; }
+.pl-seg { display: inline-flex; align-items: center; gap: 4px; }
+.pl-seg span { color: #8a8a8a; font-size: 13px; margin-right: 6px; }
+.pl-controls button {
+  font: inherit; font-size: 14px; color: #8a8a8a; background: #000;
+  border: 1px solid #333; border-radius: 0; padding: 6px 12px; cursor: pointer;
+}
+.pl-controls button:hover { color: #fff; border-color: #8a8a8a; }
+.pl-controls button.on, .pl-controls button[aria-pressed="true"] { color: #000; background: #fff; border-color: #fff; }
+.pl-controls button:focus-visible { outline: 1px solid #fff; outline-offset: 2px; }
+.pl-num { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+.pl-read { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 720px) {
+  /* keep the pendulum and the chart on screen together */
+  .pl-views { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 10px; }
+  .pl-fig figcaption { font-size: 11px; }
+  .pl-read { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .pl-read dd { font-size: 13px; }
+}

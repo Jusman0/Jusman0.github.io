@@ -3,93 +3,111 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Planner bench — Jusman0</title>
-<meta name="description" content="A live port of int8-rollout-engine: sampling-based model-predictive control with 32 int8 lanes, balancing a pendulum in your browser.">
+<title>Pendulum planner · Jusman Kolar</title>
+<meta name="description" content="A pendulum balanced in the browser by a JS port of the integer math in int8-rollout-engine.">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/site.css?v=7">
+<link rel="stylesheet" href="../assets/site.css?v=10">
+<link rel="stylesheet" href="../assets/planner.css?v=10">
 </head>
 <body>
-<nav class="top"><div class="wrap top-in"><a class="brand" href="../">Jusman0</a><div class="links"><a href="../#lab">Lab</a><a href="digits.html">Digits</a><a href="https://github.com/Jusman0/int8-rollout-engine">GitHub</a></div></div></nav>
+<div class="topbar">
+  <a class="mark" href="../" aria-label="Jusman Kolar, home">JK</a>
+</div>
 
 <main class="page wrap">
-  <a class="crumb" href="../#lab">← Lab</a>
-  <p class="label" style="margin-top:28px"><span class="c">05</span> · int8-rollout-engine · Verilog · Tang Nano 20K</p>
-  <h1>Thirty-two futures, every tick.</h1>
-  <p class="lede">A port of the engine's integer math, matching the Python golden model exactly on 200,000 random steps. Every 50 ms it imagines 32 plans through a 3 → 16 → 2 int8 physics model, scores each one, and applies the first action of the cheapest. Drag the pendulum to push it.</p>
+  <a class="back" href="../#demos">← Back</a>
+  <h1>Pendulum planner</h1>
+  <p class="lede">The planner swings the pendulum up from hanging and then keeps it balanced. Each grey line on the chart is one plan it tried; the white line is the one it picked. Drag the weight to push it.</p>
 
-  <div class="bench">
-    <div class="big">
-      <canvas id="pend" aria-label="Pendulum balanced by the int8 planner"></canvas>
-      <div class="controls">
-        <div class="seg" role="group" aria-label="Lanes"><span class="seg-l">lanes</span><button data-lanes="8">8</button><button data-lanes="16">16</button><button data-lanes="32" class="on">32</button></div>
-        <div class="seg" role="group" aria-label="Horizon"><span class="seg-l">horizon</span><button data-h="5">5</button><button data-h="15" class="on">15</button></div>
-        <button class="btn" id="drop">Drop it</button>
-        <button class="btn" id="pause">Pause</button>
-      </div>
+  <section class="pl-demo" aria-label="Live demo">
+    <div class="pl-views">
+      <figure class="pl-fig">
+        <canvas id="pend" role="img" aria-label="Pendulum. Drag the weight to push it."></canvas>
+        <figcaption>The pendulum. Drag the weight to push it.</figcaption>
+      </figure>
+      <figure class="pl-fig">
+        <canvas id="chart" role="img" aria-label="Predicted angle over the next steps for every candidate plan"></canvas>
+        <figcaption>
+          Predicted angle (degrees) for each plan.
+          <span class="pl-keys"><span class="pl-key"><i></i>plans tried</span><span class="pl-key"><i class="on"></i>plan chosen</span></span>
+        </figcaption>
+      </figure>
     </div>
-    <div>
-      <div class="read">
-        <div><span class="k">θ · int8, π/128 per step</span><span class="v" id="r-theta">0</span></div>
-        <div><span class="k">ω · int8, 8/127 rad/s per step</span><span class="v" id="r-omega">0</span></div>
-        <div><span class="k">torque applied</span><span class="v" id="r-u">0</span></div>
-        <div><span class="k">winning lane</span><span class="v" id="r-best">0</span></div>
-        <div><span class="k">its imagined cost</span><span class="v" id="r-cost">0</span></div>
-        <div><span class="k">clocks per decision</span><span class="v" id="r-clk">1,281</span></div>
+
+    <dl class="pl-read">
+      <div><dt>Angle from upright</dt><dd id="r-angle">0°</dd></div>
+      <div><dt>Angular speed</dt><dd id="r-speed">0.0 rad/s</dd></div>
+      <div><dt>Torque applied</dt><dd id="r-torque">0.00 N·m</dd></div>
+    </dl>
+
+    <div class="pl-controls">
+      <div class="pl-seg" role="group" aria-label="Plans tried per step">
+        <span>Plans per step</span>
+        <button type="button" data-lanes="8">8</button><button type="button" data-lanes="16">16</button><button type="button" data-lanes="32" class="on">32</button>
       </div>
-      <div class="lanes" id="lanes"></div>
-      <p class="cap">One cell per hardware lane: its total imagined cost this tick. Brighter is cheaper. Copper is the winner.</p>
+      <div class="pl-seg" role="group" aria-label="Steps predicted ahead">
+        <span>Steps ahead</span>
+        <button type="button" data-h="5">5</button><button type="button" data-h="15" class="on">15</button>
+      </div>
+      <button type="button" id="reset">Reset</button>
+      <button type="button" id="pause">Pause</button>
     </div>
-  </div>
+    <p class="cap">With 5 steps ahead the planner can't see far enough to swing the pendulum up from hanging, but it can keep it balanced once it is up.</p>
+  </section>
 
   <div class="prose">
-    <h2>What each lane does</h2>
-    <p>Every lane starts from the same measured state, quantized to int8, and steps its own plan of H actions through the learned model. One imagined step is three multiply-adds into 16 hidden units, a shift and a clamp, then 16 multiply-adds into two outputs:</p>
-    <div class="formula">h[j]    = clamp((B1[j] + W1[j]·(θ, ω, u)) >>> 7, 0, 127)
-Δθ, Δω  = (B2 + W2·h) >>> (8, 7)
-θ'      = low 8 bits of θ + Δθ          (wraps, like an angle)
-ω'      = clamp(ω + Δω, −127, 127)
-cost   += θ'² + (21·ω'²) >> 5 + (u²) >> 11</div>
-    <p>The lane with the lowest total wins, ties going to the lower index exactly like the RTL's strict <code>&lt;</code>. Its plan becomes next tick's warm start: shifted one step, with the other 31 candidates sampled around it.</p>
-    <p>The hardware time per decision is <b>(32 / LANES) · (83 · H + 2) + 34</b> clocks, which is 1,281 for 32 lanes and 15 steps. The 8-lane board build takes 5,022 clocks, measured on a logic analyzer as <b>186.000 µs</b> at 27 MHz.</p>
-    <p>In the real project, the board picks every action of 20 Pendulum-v1 episodes, and all 20 returns are identical to the golden model's. Here the physics is a JS copy of Pendulum-v1, and the planner is this page.</p>
-    <p><a href="https://github.com/Jusman0/int8-rollout-engine">github.com/Jusman0/int8-rollout-engine ↗</a></p>
+    <h2>How it works</h2>
+    <p>Every 50 ms the planner builds a set of torque sequences: last step's best plan, shifted by one step, plus random variations of it. It runs each one through a small learned model of the pendulum, adds up a cost for how far each predicted path is from upright, and applies the first torque of the cheapest plan. This page runs a JS port of the integer math in int8-rollout-engine, which matches the Python model exactly.</p>
+    <p>The pendulum's state is stored as two 8-bit integers. The angle uses steps of π/128, so 0 is upright and it wraps around at ±128. The angular speed uses steps of 8/127 rad/s and stops at ±127. Each motor torque in a plan is also an 8-bit integer.</p>
+    <p>The learned model takes angle, speed and torque, passes them through 16 hidden units, and outputs the change in angle and speed for one 50 ms step (a 3 → 16 → 2 network, all integer multiply-adds and shifts). Each plan is stepped through it 15 times (or 5, with fewer steps ahead), and every step adds a cost of <code>θ² + 21ω²/32 + u²/2048</code>, in the same integer units. The plan with the lowest total wins. Its remaining torques, shifted by one step, become the starting guess for the next step, and the other plans are random variations around it.</p>
+    <p>In hardware, the plans are split across parallel lanes. One decision takes <code>(32 / lanes) · (83 · H + 2) + 34</code> clock cycles, which is <span class="pl-num" id="r-clk">1,281</span> for the current settings. The 8-lane build runs on a Tang Nano 20K FPGA and takes 186 µs per decision.</p>
+    <p>The physics here is a JS copy of the Pendulum-v1 environment. </p>
+    <p><a href="https://github.com/Jusman0/int8-rollout-engine">Source on GitHub</a></p>
   </div>
 </main>
 
-<script src="../assets/models.js?v=7"></script>
-<script src="../assets/engine.js?v=7"></script>
-<script src="../assets/planner.js?v=7"></script>
+<script src="../assets/models.js?v=10"></script>
+<script src="../assets/engine.js?v=10"></script>
+<script src="../assets/planner.js?v=10"></script>
 <script>
 (function () {
-  const E = Engine, $ = (id) => document.getElementById(id), fmt = (n) => n.toLocaleString("en-US");
-  function buildLanes(n) { const el = $("lanes"); el.style.gridTemplateColumns = `repeat(${n}, 1fr)`; el.innerHTML = "<div></div>".repeat(n); }
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n) => n.toLocaleString("en-US");
+  // signed number with a real minus sign and no "-0"
+  const num = (x, d) => {
+    const s = Math.abs(x).toFixed(d);
+    return (+s === 0 ? "" : x < 0 ? "−" : "+") + s;
+  };
+
   const pl = Planner($("pend"), {
+    chart: $("chart"),
+    observe: document.querySelector(".pl-demo"),   // pause when the whole demo is off-screen
     onTick(last, P) {
-      const r = last.r, cells = $("lanes").children;
-      $("r-theta").textContent = last.tq; $("r-omega").textContent = last.oq;
-      $("r-u").textContent = (2 * last.u / 127).toFixed(2) + " N·m";
-      $("r-best").textContent = r.best; $("r-cost").textContent = fmt(r.cost[r.best]);
-      if (cells.length !== r.cost.length) return;
-      const lo = Math.min(...r.cost), hi = Math.max(...r.cost);
-      for (let i = 0; i < cells.length; i++) {
-        const t = hi > lo ? (r.cost[i] - lo) / (hi - lo) : 0;
-        cells[i].className = i === r.best ? "best" : "";
-        cells[i].style.opacity = i === r.best ? 1 : (1 - 0.82 * t).toFixed(3);
-      }
+      $("r-angle").textContent = num(P.theta * 180 / Math.PI, 0) + "°";
+      $("r-speed").textContent = num(P.omega, 1) + " rad/s";
+      $("r-torque").textContent = num(2 * last.u / 127, 2) + " N·m";
     },
   });
-  const clk = () => { $("r-clk").textContent = fmt(E.clocks(pl.state.lanes, pl.state.H)); };
+
+  const clk = () => { $("r-clk").textContent = fmt(Engine.clocks(pl.state.lanes, pl.state.H)); };
+  const pick = (sel, b) => document.querySelectorAll(sel).forEach((x) => {
+    x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b ? "true" : "false");
+  });
   document.querySelectorAll("[data-lanes]").forEach((b) => b.addEventListener("click", () => {
-    document.querySelectorAll("[data-lanes]").forEach((x) => x.classList.toggle("on", x === b));
-    pl.setLanes(+b.dataset.lanes); buildLanes(+b.dataset.lanes); clk();
+    pick("[data-lanes]", b); pl.setLanes(+b.dataset.lanes); clk();
   }));
   document.querySelectorAll("[data-h]").forEach((b) => b.addEventListener("click", () => {
-    document.querySelectorAll("[data-h]").forEach((x) => x.classList.toggle("on", x === b));
-    pl.setH(+b.dataset.h); clk();
+    pick("[data-h]", b); pl.setH(+b.dataset.h); clk();
   }));
-  $("drop").addEventListener("click", () => pl.drop());
-  $("pause").addEventListener("click", (e) => { e.target.textContent = pl.toggle() ? "Pause" : "Play"; });
-  buildLanes(32);
+  pick("[data-lanes]", document.querySelector('[data-lanes="32"]'));
+  pick("[data-h]", document.querySelector('[data-h="15"]'));
+
+  const pauseBtn = $("pause");
+  const label = () => { pauseBtn.textContent = pl.state.running ? "Pause" : "Play"; };
+  pauseBtn.addEventListener("click", () => { pl.toggle(); label(); });
+  $("reset").addEventListener("click", () => pl.reset());
+  label(); clk();
 })();
 </script>
 </body>

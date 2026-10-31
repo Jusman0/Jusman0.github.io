@@ -9,15 +9,15 @@
   const draw = $("draw"), dctx = draw.getContext("2d");
   let drawing = false, last = null, sample = false, anim = 0;
 
-  function clearDraw() { dctx.fillStyle = "#000"; dctx.fillRect(0, 0, 280, 280); }
+  function clearDraw() { dctx.fillStyle = "#000"; dctx.fillRect(0, 0, 560, 560); }
   clearDraw();
 
   function pos(e) {
     const r = draw.getBoundingClientRect();
-    return [(e.clientX - r.left) * 280 / r.width, (e.clientY - r.top) * 280 / r.height];
+    return [(e.clientX - r.left) * 560 / r.width, (e.clientY - r.top) * 560 / r.height];
   }
   function stroke(p) {
-    dctx.strokeStyle = "#fff"; dctx.lineWidth = 22; dctx.lineCap = dctx.lineJoin = "round";
+    dctx.strokeStyle = "#fff"; dctx.lineWidth = 44; dctx.lineCap = dctx.lineJoin = "round";
     dctx.beginPath(); dctx.moveTo(last[0], last[1]); dctx.lineTo(p[0], p[1]); dctx.stroke();
     last = p;
   }
@@ -34,7 +34,10 @@
   // MNIST-style framing: fit the ink in 20 × 20, centre its mass in 28 × 28,
   // then the same 2 × 2 average pool and round(x * 127) as prepare_mnist.py
   function preprocess() {
-    const img = dctx.getImageData(0, 0, 280, 280).data;
+    // the canvas is drawn at 2x for sharp screens; read it back at 280 x 280
+    const src = document.createElement("canvas"); src.width = src.height = 280;
+    src.getContext("2d").drawImage(draw, 0, 0, 280, 280);
+    const img = src.getContext("2d").getImageData(0, 0, 280, 280).data;
     let x0 = 280, y0 = 280, x1 = -1, y1 = -1;
     for (let y = 0; y < 280; y++) for (let x = 0; x < 280; x++) if (img[(y * 280 + x) * 4] > 20) {
       if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
@@ -45,7 +48,7 @@
     // shrink in two steps so thin strokes are averaged rather than skipped
     const mid = document.createElement("canvas"); mid.width = tw * 4; mid.height = th * 4;
     const mctx = mid.getContext("2d"); mctx.imageSmoothingQuality = "high";
-    mctx.drawImage(draw, x0, y0, bw, bh, 0, 0, tw * 4, th * 4);
+    mctx.drawImage(src, x0, y0, bw, bh, 0, 0, tw * 4, th * 4);
     const sm = document.createElement("canvas"); sm.width = tw; sm.height = th;
     const sctx = sm.getContext("2d"); sctx.imageSmoothingQuality = "high";
     sctx.drawImage(mid, 0, 0, tw, th);
@@ -82,14 +85,13 @@
     const cv = DigitView.thumb(s.x);
     cv.title = `MNIST test image, label ${s.label}`;
     cv.addEventListener("click", () => {
-      clearDraw(); dctx.imageSmoothingEnabled = false; dctx.drawImage(cv, 0, 0, 280, 280); sample = true;
+      clearDraw(); dctx.imageSmoothingEnabled = false; dctx.drawImage(cv, 0, 0, 560, 560); sample = true;
       run(s.x);
     });
     $("samples").appendChild(cv);
   });
 
-  const unoMin = Math.round(491000 / 273 * DURATION / 60000);
-  $("uno").textContent = `UNO: ~491,000 clocks, about ${unoMin} min at this speed`;
+  $("uno").textContent = `The Arduino UNO needs about 491,000 clock cycles for the same image.`;
   view.show(0);
   $("samples").children[3].click();
 })();

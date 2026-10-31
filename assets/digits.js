@@ -98,9 +98,9 @@
       if (el.track) el.track.querySelectorAll(".ph").forEach((p, i) => p.classList.toggle("done", clock >= PHASES[i]));
       if (el.phase) el.phase.textContent = !res ? "idle" :
         clock < PHASES[0] ? `layer 1 · pixel ${Math.min(clock, 195)}` :
-        clock < PHASES[1] ? `requantize · lane ${clock - PHASES[0]}` :
+        clock < PHASES[1] ? `rescale · unit ${clock - PHASES[0]}` :
         clock < PHASES[2] ? `layer 2 · input ${Math.min(clock - PHASES[1], 31)}` :
-        clock < PHASES[3] ? `argmax · digit ${Math.min(clock - PHASES[2], 9)}` : "done";
+        clock < PHASES[3] ? `pick · digit ${Math.min(clock - PHASES[2], 9)}` : "done";
       if (el.digit) {
         if (!res) el.digit.textContent = "–";
         else if (clock >= 273) el.digit.textContent = res.digit;
