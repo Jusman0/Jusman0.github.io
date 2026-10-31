@@ -6,7 +6,8 @@
 <title>Jusman Kolar</title>
 <meta name="description" content="Jusman Kolar. I build small neural-network hardware in Verilog and check it bit for bit against a Python model.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="assets/site.css?v=10">
+<link rel="stylesheet" href="assets/site.css?v=11">
+<link rel="stylesheet" href="assets/planner.css?v=11">
 </head>
 <body>
 
@@ -17,9 +18,9 @@
 
 <nav class="menu" id="menu">
   <ul>
-    <li><a href="#about">About</a></li>
-    <li><a href="#projects">Projects</a></li>
     <li><a href="#demos">Demos</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#about">About</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
 </nav>
@@ -27,20 +28,93 @@
 <header class="hero" id="top">
   <div>
     <h1>Jusman Kolar</h1>
-    <p class="typed"><span class="sr">I write Verilog for int8 inference. I run neural networks on an Arduino. I test my designs on FPGAs.</span><span class="t" aria-hidden="true" data-phrases='["I write Verilog for int8 inference", "I run neural networks on an Arduino", "I test my designs on FPGAs"]'>I write Verilog for int8 inference</span><span class="caret" aria-hidden="true"></span></p>
+    <p class="typed"><span class="sr">I like putting models on constrained hardware.</span><span class="t" aria-hidden="true" data-phrases='["I like putting models on constrained hardware."]'>I like putting models on constrained hardware.</span><span class="caret" aria-hidden="true"></span></p>
   </div>
   <div class="social">
     <a href="https://github.com/Jusman0" aria-label="GitHub"><svg viewBox="0 0 24 24"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6 0-3.2 0 0 1-.3 3.4 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8 0 3.2.9.8 1.3 1.9 1.3 3.2 0 4.6-2.8 5.6-5.5 5.9.5.4.9 1.1.9 2.2v3.3c0 .3.1.7.8.6A12 12 0 0 0 12 .3"/></svg></a>
   </div>
-  <a class="scroll" href="#about" aria-label="Scroll down"></a>
+  <a class="scroll" href="#demos" aria-label="Scroll down"></a>
 </header>
 
-<section class="s about" id="about">
+<section class="s" id="demos">
   <div class="wrap">
-    <h2>About</h2>
-    <p>I build small neural-network hardware in Verilog and check it bit for bit against a Python model.</p>
-    <p>Most of my projects follow one operation, the weighted sum, from a resistor circuit to an Arduino, to custom int8 hardware on an FPGA. Each repo lists its results along with the commands I used to get them.</p>
-    <p class="tools">Verilog, Icarus Verilog, Yosys, nextpnr, Python, NumPy, PyTorch, Arduino, CUDA (CuPy), Tang Nano 20K</p>
+    <h2>Demos</h2>
+
+    <div class="demo-block" id="digits">
+      <h3>Draw a digit</h3>
+      <p class="demo-lede">Draw a digit from 0 to 9, or pick one of the test images. This runs the same integer math as my tiny-tensor-core Verilog design, and the strip at the bottom steps through its 273 clock cycles.</p>
+      <div class="drawbench">
+    <div class="box">
+      <div class="box-h"><span>Draw here</span><button id="clear">Clear</button></div>
+      <canvas id="draw" width="560" height="560" aria-label="Drawing area"></canvas>
+      <div class="samples" id="samples" aria-label="Real MNIST test images"></div>
+      <p class="cap">Or pick a real MNIST test image.</p>
+    </div>
+    <div class="box">
+      <div class="box-h"><span>Input to the hardware, 14 × 14</span></div>
+      <canvas class="seen" id="seen" width="224" height="224"></canvas>
+      <div class="box-h" style="margin-top:16px"><span>32 hidden units</span><span id="phase">idle</span></div>
+      <canvas class="hid" id="hid"></canvas>
+    </div>
+    <div class="box">
+      <div class="box-h"><span>Prediction</span><span>Scores</span></div>
+      <div class="answer" id="digit">–</div>
+      <div class="logits" id="logits"></div>
+    </div>
+  </div>
+
+  <div class="clock">
+    <div class="clock-top"><span>Clock cycle <b id="clk">0</b> of 273</span><span id="uno"></span></div>
+    <div class="track" id="track">
+      <div class="ph" style="flex:197"><span>Layer 1</span></div>
+      <div class="ph" style="flex:32"><span>Rescale</span></div>
+      <div class="ph" style="flex:33"><span>Layer 2</span></div>
+      <div class="ph" style="flex:11"><span>Pick</span></div>
+      <div class="cursor" id="cursor"></div>
+    </div>
+  </div>
+    </div>
+
+    <div class="demo-block" id="planner">
+      <h3>Pendulum planner</h3>
+      <p class="demo-lede">My int8-rollout-engine planner swings the pendulum up and keeps it balanced. Every 50 ms it tries a set of torque plans in a small learned model: each grey line is one plan's predicted angle, and the white line is the one it picks. In hardware, one decision takes <span class="pl-num" id="r-clk">1,281</span> clock cycles. Drag the weight to push it.</p>
+      <div class="pl-demo">
+    <div class="pl-views">
+      <figure class="pl-fig">
+        <canvas id="pend" role="img" aria-label="Pendulum. Drag the weight to push it."></canvas>
+        <figcaption>The pendulum. Drag the weight to push it.</figcaption>
+      </figure>
+      <figure class="pl-fig">
+        <canvas id="chart" role="img" aria-label="Predicted angle over the next steps for every candidate plan"></canvas>
+        <figcaption>
+          Predicted angle (degrees) for each plan.
+          <span class="pl-keys"><span class="pl-key"><i></i>plans tried</span><span class="pl-key"><i class="on"></i>plan chosen</span></span>
+        </figcaption>
+      </figure>
+    </div>
+
+    <dl class="pl-read">
+      <div><dt>Angle from upright</dt><dd id="r-angle">0°</dd></div>
+      <div><dt>Angular speed</dt><dd id="r-speed">0.0 rad/s</dd></div>
+      <div><dt>Torque applied</dt><dd id="r-torque">0.00 N·m</dd></div>
+    </dl>
+
+    <div class="pl-controls">
+      <div class="pl-seg" role="group" aria-label="Plans tried per step">
+        <span>Plans per step</span>
+        <button type="button" data-lanes="8">8</button><button type="button" data-lanes="16">16</button><button type="button" data-lanes="32" class="on">32</button>
+      </div>
+      <div class="pl-seg" role="group" aria-label="Steps predicted ahead">
+        <span>Steps ahead</span>
+        <button type="button" data-h="5">5</button><button type="button" data-h="15" class="on">15</button>
+      </div>
+      <button type="button" id="reset">Reset</button>
+      <button type="button" id="pause">Pause</button>
+    </div>
+    <p class="cap">With 5 steps ahead the planner can't see far enough to swing the pendulum up from hanging, but it can keep it balanced once it is up.</p>
+  </div>
+      <p class="cap">With 5 steps ahead the planner can't see far enough to swing the pendulum up from hanging, but it can keep it balanced once it is up.</p>
+    </div>
   </div>
 </section>
 
@@ -55,7 +129,7 @@
           <p>A 32-lane int8 Verilog engine that plans actions for a pendulum. At each control step it runs 32 candidate plans through a small learned model and picks the one with the lowest cost.</p>
           <p class="res">Matches the Python model on 4,000 / 4,000 decisions at 1,281 clocks each. An 8-lane build on a Tang Nano 20K FPGA is also bit-exact and takes 186 µs per decision.</p>
         </div>
-        <div class="links"><a href="lab/planner.html">Demo</a><a href="https://github.com/Jusman0/int8-rollout-engine">GitHub</a></div>
+        <div class="links"><a href="#planner">Demo</a><a href="https://github.com/Jusman0/int8-rollout-engine">GitHub</a></div>
       </li>
       <li>
         <span class="n">02</span>
@@ -64,7 +138,7 @@
           <p>My int8 MNIST network from tinyml-mnist-uno, implemented in Verilog with 32 parallel multiply-accumulate lanes and integer-only rescaling between layers.</p>
           <p class="res">Bit-exact on all 10,000 MNIST test images, with the same predictions as the Arduino version. 273 clocks per image, about 50 MHz on an ECP5 FPGA.</p>
         </div>
-        <div class="links"><a href="lab/digits.html">Demo</a><a href="https://github.com/Jusman0/tiny-tensor-core">GitHub</a></div>
+        <div class="links"><a href="#digits">Demo</a><a href="https://github.com/Jusman0/tiny-tensor-core">GitHub</a></div>
       </li>
       <li>
         <span class="n">03</span>
@@ -115,21 +189,12 @@
   </div>
 </section>
 
-<section class="s" id="demos">
+<section class="s about" id="about">
   <div class="wrap">
-    <h2>Demos</h2>
-    <div class="demos">
-      <a class="demo" href="lab/digits.html">
-        <h3>Draw a digit</h3>
-        <p>Draw a digit and see what tiny-tensor-core outputs, step by step through its 273 clock cycles.</p>
-        <span>Open</span>
-      </a>
-      <a class="demo" href="lab/planner.html">
-        <h3>Pendulum planner</h3>
-        <p>The int8-rollout-engine planner swings a pendulum up and balances it. You can see every plan it tries.</p>
-        <span>Open</span>
-      </a>
-    </div>
+    <h2>About</h2>
+    <p>I build small neural-network hardware in Verilog and check it bit for bit against a Python model.</p>
+    <p>Most of my projects follow one operation, the weighted sum, from a resistor circuit to an Arduino, to custom int8 hardware on an FPGA. Each repo lists its results along with the commands I used to get them.</p>
+    <p class="tools">Verilog, Icarus Verilog, Yosys, nextpnr, Python, NumPy, PyTorch, Arduino, CUDA (CuPy), Tang Nano 20K</p>
   </div>
 </section>
 
@@ -142,6 +207,12 @@
 
 <footer><div class="wrap">© 2026 Jusman Kolar</div></footer>
 
-<script src="assets/home.js?v=10"></script>
+<script src="assets/models.js?v=11"></script>
+<script src="assets/engine.js?v=11"></script>
+<script src="assets/digits.js?v=11"></script>
+<script src="assets/lab-digits.js?v=11"></script>
+<script src="assets/planner.js?v=11"></script>
+<script src="assets/demo-planner.js?v=11"></script>
+<script src="assets/home.js?v=11"></script>
 </body>
 </html>

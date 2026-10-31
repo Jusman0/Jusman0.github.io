@@ -93,5 +93,8 @@
 
   $("uno").textContent = `The Arduino UNO needs about 491,000 clock cycles for the same image.`;
   view.show(0);
-  $("samples").children[3].click();
+  // classify a sample the first time the demo scrolls into view
+  new IntersectionObserver((en, obs) => {
+    if (en[0].isIntersecting) { obs.disconnect(); $("samples").children[3].click(); }
+  }, { threshold: 0.3 }).observe($("digits"));
 })();
